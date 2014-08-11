@@ -72,7 +72,6 @@ void Scheduler::start()
     string etc_path;
 
     int          oned_port;
-    unsigned int live_rescheds;
 
     pthread_attr_t pattr;
 
@@ -285,7 +284,7 @@ void Scheduler::start()
 
     hpool  = new HostPoolXML(client);
     clpool = new ClusterPoolXML(client);
-    vmpool = new VirtualMachinePoolXML(client,machines_limit,(live_rescheds==1));
+    vmpool = new VirtualMachinePoolXML(client,machines_limit);
 
     vmapool = new VirtualMachineActionsPoolXML(client, machines_limit);
 
@@ -1100,7 +1099,15 @@ void Scheduler::dispatch()
             //------------------------------------------------------------------
             // Dispatch and update host and DS capacity, and dispatch counters
             //------------------------------------------------------------------
-            if (vmpool->dispatch(vm_it->first, hid, dsid, vm->is_resched()) != 0)
+
+            bool live = live_rescheds;
+
+            if (vm->is_unknown_state())
+            {
+                live = false;
+            }
+
+            if (vmpool->dispatch(vm_it->first, hid, dsid, vm->is_resched(), live) != 0)
             {
                 continue;
             }

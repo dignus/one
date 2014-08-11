@@ -124,6 +124,11 @@ public:
         return public_cloud;
     };
 
+    bool is_unknown_state() const
+    {
+        return (state == 3 && lcm_state == 16);
+    };
+
     //--------------------------------------------------------------------------
     // Matched Resources Interface
     //--------------------------------------------------------------------------
@@ -314,6 +319,9 @@ protected:
     int   dsid;
 
     int   resched;
+
+    int   state;
+    int   lcm_state;
 
     int         memory;
     float       cpu;

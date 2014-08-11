@@ -122,7 +122,7 @@ int VirtualMachinePoolXML::load_info(xmlrpc_c::value &result)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int VirtualMachinePoolXML::dispatch(int vid, int hid, int dsid, bool resched) const
+int VirtualMachinePoolXML::dispatch(int vid, int hid, int dsid, bool resched, bool live_resched) const
 {
     ostringstream               oss;
     xmlrpc_c::value             deploy_result;

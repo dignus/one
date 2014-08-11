@@ -28,9 +28,8 @@ class VirtualMachinePoolXML : public PoolXML
 public:
 
     VirtualMachinePoolXML(Client*        client,
-                          unsigned int   machines_limit,
-                          bool           _live_resched):
-        PoolXML(client, machines_limit), live_resched(_live_resched){};
+                          unsigned int   machines_limit):
+        PoolXML(client, machines_limit){};
 
     virtual ~VirtualMachinePoolXML(){};
 
@@ -59,8 +58,9 @@ public:
      *    @param vid the VM id
      *    @param hid the id of the target host
      *    @param resched the machine is going to be rescheduled
+     *    @param live_resched Do live migrations to resched VMs
      */
-    int dispatch(int vid, int hid, int dsid, bool resched) const;
+    int dispatch(int vid, int hid, int dsid, bool resched, bool live_resched) const;
 
     /**
      *  Update the VM template
@@ -88,18 +88,15 @@ protected:
 
     int get_suitable_nodes(vector<xmlNodePtr>& content)
     {
-        return get_nodes("/VM_POOL/VM[STATE=1 or (LCM_STATE=3 and RESCHED=1)]",
-                         content);
+        // Pending or ((running or unknown) and resched))
+        return get_nodes(
+            "/VM_POOL/VM[STATE=1 or ((LCM_STATE=3 or LCM_STATE=16) and RESCHED=1)]",
+            content);
     }
 
     virtual void add_object(xmlNodePtr node);
 
     virtual int load_info(xmlrpc_c::value &result);
-
-    /**
-     * Do live migrations to resched VMs
-     */
-    bool live_resched;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -111,7 +108,7 @@ public:
 
     VirtualMachineActionsPoolXML(Client*       client,
                                  unsigned int  machines_limit):
-        VirtualMachinePoolXML(client, machines_limit, false){};
+        VirtualMachinePoolXML(client, machines_limit){};
 
     virtual ~VirtualMachineActionsPoolXML(){};
 

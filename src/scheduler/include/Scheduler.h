@@ -171,6 +171,11 @@ private:
     unsigned int host_dispatch_limit;
 
     /**
+     *  Do live migrations to resched VMs
+     */
+    unsigned int live_rescheds;
+
+    /**
      *  OpenNebula zone id.
      */
     int zone_id;

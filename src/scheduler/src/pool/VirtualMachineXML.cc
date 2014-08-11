@@ -172,6 +172,28 @@ void VirtualMachineXML::init_attributes()
         resched = 0;
     }
 
+    result = ((*this)["/VM/STATE"]);
+
+    if (result.size() > 0)
+    {
+        state = atoi(result[0].c_str());
+    }
+    else
+    {
+        state = 0;
+    }
+
+    result = ((*this)["/VM/LCM_STATE"]);
+
+    if (result.size() > 0)
+    {
+        lcm_state = atoi(result[0].c_str());
+    }
+    else
+    {
+        lcm_state = 0;
+    }
+
     if (get_nodes("/VM/TEMPLATE", nodes) > 0)
     {
         vm_template = new VirtualMachineTemplate;
