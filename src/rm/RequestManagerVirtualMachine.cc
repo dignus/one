@@ -2219,3 +2219,182 @@ void VirtualMachineRecover::request_execute(
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
+
+void VirtualMachineRediscover::request_execute(
+        xmlrpc_c::paramList const& paramList, RequestAttributes& att)
+{
+    Nebula&             nd = Nebula::instance();
+    LifeCycleManager*   lcm = nd.get_lcm();
+
+    VirtualMachine * vm;
+    VirtualMachine::VmState state;
+
+    string hostname;
+    string vmm_mad;
+    string vnm_mad;
+    int    cluster_id;
+    string ds_location;
+    bool   is_public_cloud;
+    PoolObjectAuth host_perms;
+
+    string tm_mad;
+
+    // ------------------------------------------------------------------------
+    // Get request parameters
+    // ------------------------------------------------------------------------
+
+    int     id          = xmlrpc_c::value_int(paramList.getInt(1));
+    int     hid         = xmlrpc_c::value_int(paramList.getInt(2));
+    int     ds_id       = xmlrpc_c::value_int(paramList.getInt(3));
+    string  deploy_id   = xmlrpc_c::value_string(paramList.getString(4));
+
+    if ( vm_authorization(id, 0, 0, att, 0, 0, auth_op) == false )
+    {
+        return;
+    }
+
+    // ------------------------------------------------------------------------
+    // Get information about host and the system DS to use (tm_mad)
+    // ------------------------------------------------------------------------
+
+    if ((vm = get_vm(id, att)) == 0)
+    {
+        return;
+    }
+
+    // For poweroff & suspend, this is the current host/DS.
+    // For failed, this this the last host/DS.
+    // VMs in pending will need to set the host id
+    if (vm->hasHistory())
+    {
+        if (hid == -1)
+        {
+            hid = vm->get_hid();
+        }
+
+        if (ds_id == -1)
+        {
+            ds_id = vm->get_ds_id();
+        }
+    }
+
+    if (hid == -1)
+    {
+        failure_response(XML_RPC_API,
+                        request_error("A Host ID is required for this VM",""),
+                        att);
+
+        vm->unlock();
+        return;
+    }
+
+    if (deploy_id == "")
+    {
+        deploy_id = vm->get_deploy_id();
+    }
+
+    if (deploy_id == "")
+    {
+        // TODO Should be error if deploy-id is not set?
+        ostringstream oss;
+        oss << "one-" << vm->get_oid();
+
+        deploy_id = oss.str();
+    }
+
+    vm->update_info(deploy_id);
+
+    pool->update(vm);
+
+    vm->unlock();
+
+    if (get_host_information(hid,
+                             hostname,
+                             vmm_mad,
+                             vnm_mad,
+                             cluster_id,
+                             ds_location,
+                             is_public_cloud,
+                             host_perms,
+                             att) != 0)
+    {
+        return;
+    }
+
+    if (is_public_cloud) // Set ds_id to -1 and tm_mad empty(). This is used by
+    {                    // by VirtualMachine::get_host_is_cloud()
+        ds_id  = -1;
+        tm_mad = "";
+    }
+    else
+    {
+        if ( ds_id == -1 ) //Use default system DS for cluster
+        {
+            if (get_default_ds_information(cluster_id, ds_id, tm_mad, att) != 0)
+            {
+                return;
+            }
+        }
+        else //Get information from user selected system DS
+        {
+            int ds_cluster_id;
+
+            if (get_ds_information(ds_id, ds_cluster_id, tm_mad, att) != 0)
+            {
+                return;
+            }
+
+            if (ds_cluster_id != cluster_id)
+            {
+                ostringstream oss;
+
+                oss << object_name(PoolObjectSQL::DATASTORE)
+                    << " [" << ds_id << "] and " << object_name(PoolObjectSQL::HOST)
+                    << " [" << hid <<"] are not in the same cluster.";
+
+                failure_response(ACTION, request_error(oss.str(),""), att);
+
+                return;
+            }
+        }
+    }
+
+    if ((vm = get_vm(id, att)) == 0)
+    {
+        return;
+    }
+
+    state = vm->get_state();
+
+    if (state != VirtualMachine::SUSPENDED &&
+        state != VirtualMachine::POWEROFF &&
+        state != VirtualMachine::FAILED &&
+        state != VirtualMachine::PENDING &&
+        state != VirtualMachine::HOLD &&
+        state != VirtualMachine::UNDEPLOYED &&
+        state != VirtualMachine::STOPPED)
+    {
+        failure_response(ACTION,
+                request_error("Wrong state to perform action",""),
+                att);
+
+        vm->unlock();
+        return;
+    }
+
+    lcm->rediscover(vm,
+                    hid,
+                    cluster_id,
+                    hostname,
+                    vmm_mad,
+                    vnm_mad,
+                    tm_mad,
+                    ds_location,
+                    ds_id);
+
+    success_response(id, att);
+
+    vm->unlock();
+
+    return;
+}

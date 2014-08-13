@@ -306,11 +306,21 @@ void  LifeCycleManager::deploy_success_action(int vid)
               vm->get_lcm_state() == VirtualMachine::BOOT_STOPPED ||
               vm->get_lcm_state() == VirtualMachine::BOOT_UNDEPLOY )
     {
-        vm->set_state(VirtualMachine::RUNNING);
+        if(!vm->is_rediscover())
+        {
+            vm->set_state(VirtualMachine::RUNNING);
+
+            vm->log("LCM", Log::INFO, "New VM state is RUNNING");
+        }
+        else
+        {
+            vm->set_state(VirtualMachine::UNKNOWN);
+            vm->set_rediscover(false);
+
+            vm->log("LCM", Log::INFO, "New VM state is UNKNOWN");
+        }
 
         vmpool->update(vm);
-
-        vm->log("LCM", Log::INFO, "New VM state is RUNNING");
     }
     else
     {
@@ -719,7 +729,14 @@ void  LifeCycleManager::prolog_success_action(int vid)
 
     //----------------------------------------------------
 
-    vmm->trigger(action,vid);
+    if (!vm->is_rediscover())
+    {
+        vmm->trigger(action,vid);
+    }
+    else
+    {
+        trigger(LifeCycleManager::DEPLOY_SUCCESS, vid);
+    }
 
     vm->unlock();
 

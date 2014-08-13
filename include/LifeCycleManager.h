@@ -129,6 +129,20 @@ public:
      */
     void  recover(VirtualMachine * vm, bool success);
 
+    /**
+     *  Rediscovers a VM that was recovered manually by setting its state
+     *  to UNKNOWN. The VM is then monitored, and moved to RUNNING if it is found
+     */
+    void rediscover(VirtualMachine * vm,
+                    int              hid,
+                    int              cid,
+                    const string&    hostname,
+                    const string&    vmm_mad,
+                    const string&    vnm_mad,
+                    const string&    tm_mad,
+                    const string&    ds_location,
+                    int              ds_id);
+
 private:
     /**
      *  Thread id for the Virtual Machine Manager

@@ -108,7 +108,14 @@ void  LifeCycleManager::deploy_action(int vid)
 
         //----------------------------------------------------
 
-        tm->trigger(tm_action,vid);
+        if (!vm->is_rediscover())
+        {
+            tm->trigger(tm_action,vid);
+        }
+        else
+        {
+            trigger(LifeCycleManager::PROLOG_SUCCESS, vid);
+        }
     }
     else
     {
@@ -621,7 +628,14 @@ void  LifeCycleManager::restore_action(int vid)
 
         //----------------------------------------------------
 
-        vmm->trigger(VirtualMachineManager::RESTORE,vid);
+        if (!vm->is_rediscover())
+        {
+            vmm->trigger(VirtualMachineManager::RESTORE,vid);
+        }
+        else
+        {
+            trigger(LifeCycleManager::DEPLOY_SUCCESS, vid);
+        }
     }
     else
     {
@@ -754,7 +768,14 @@ void  LifeCycleManager::restart_action(int vid)
             vm->log("LCM", Log::INFO, "New VM state is BOOT_POWEROFF");
         }
 
-        vmm->trigger(VirtualMachineManager::DEPLOY,vid);
+        if (!vm->is_rediscover())
+        {
+            vmm->trigger(VirtualMachineManager::DEPLOY,vid);
+        }
+        else
+        {
+            trigger(LifeCycleManager::DEPLOY_SUCCESS, vid);
+        }
     }
     else
     {
@@ -1256,3 +1277,76 @@ void  LifeCycleManager::recover(VirtualMachine * vm, bool success)
     }
 }
 
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void LifeCycleManager::rediscover(  VirtualMachine * vm,
+                                    int              hid,
+                                    int              cid,
+                                    const string&    hostname,
+                                    const string&    vmm_mad,
+                                    const string&    vnm_mad,
+                                    const string&    tm_mad,
+                                    const string&    ds_location,
+                                    int              ds_id)
+{
+    time_t the_time = time(0);
+
+    vm->set_rediscover(true);
+
+    vm->log("LCM", Log::INFO, "Rediscover action started");
+
+    switch (vm->get_state())
+    {
+        case VirtualMachine::SUSPENDED:
+        case VirtualMachine::POWEROFF:
+
+            vm->set_state(VirtualMachine::ACTIVE);
+
+            if (vm->get_state() == VirtualMachine::SUSPENDED)
+            {
+                vm->set_state(VirtualMachine::BOOT_SUSPENDED);
+                vm->log("LCM", Log::INFO, "New VM state is BOOT_SUSPENDED");
+            }
+            else
+            {
+                vm->set_state(VirtualMachine::BOOT_POWEROFF);
+                vm->log("LCM", Log::INFO, "New VM state is BOOT_POWEROFF");
+            }
+
+            vm->add_history(hid, cid, hostname, vmm_mad, vnm_mad, tm_mad, ds_location, ds_id);
+
+            vm->set_stime(the_time);
+
+            vm->set_running_stime(the_time);
+
+            trigger(LifeCycleManager::DEPLOY_SUCCESS, vm->get_oid());
+            break;
+
+        case VirtualMachine::FAILED:
+        case VirtualMachine::PENDING:
+        case VirtualMachine::HOLD:
+        case VirtualMachine::UNDEPLOYED:
+        case VirtualMachine::STOPPED:
+
+            // Put on hold to avoid an scheduler action in between
+            vm->set_state(VirtualMachine::HOLD);
+            vm->set_state(VirtualMachine::LCM_INIT);
+
+            // -----------------------------------------------------------------
+            // Add a new history record and deploy the VM
+            // -----------------------------------------------------------------
+
+            vm->add_history(hid, cid, hostname, vmm_mad, vnm_mad, tm_mad, ds_location, ds_id);
+
+            Nebula::instance().get_dm()->deploy(vm);
+
+            break;
+
+        default:
+            break;
+    }
+
+    vmpool->update(vm);
+    vmpool->update_history(vm);
+}

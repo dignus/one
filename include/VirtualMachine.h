@@ -841,6 +841,23 @@ public:
         previous_history->action = action;
     };
 
+    void set_rediscover(bool _rediscover)
+    {
+        if ( _rediscover == true )
+        {
+            rediscover = 1;
+        }
+        else
+        {
+            rediscover = 0;
+        }
+    };
+
+    bool is_rediscover()
+    {
+        return rediscover == 1;
+    };
+
     // ------------------------------------------------------------------------
     // Template
     // ------------------------------------------------------------------------
@@ -1467,6 +1484,11 @@ private:
      *  Network usage, received bytes
      */
     long long   net_rx;
+
+    /**
+     *  Marks the VM as to be rediscovered
+     */
+    int         rediscover;
 
     /**
      *  History record, for the current host

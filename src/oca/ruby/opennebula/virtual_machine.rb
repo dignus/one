@@ -44,7 +44,8 @@ module OpenNebula
             :attachnic  => "vm.attachnic",
             :detachnic  => "vm.detachnic",
             :resize     => "vm.resize",
-            :recover    => "vm.recover"
+            :recover    => "vm.recover",
+            :rediscover => "vm.rediscover"
         }
 
         VM_STATE=%w{INIT PENDING HOLD ACTIVE STOPPED SUSPENDED DONE FAILED
@@ -545,6 +546,16 @@ module OpenNebula
         def recover(result)
             return call(VM_METHODS[:recover], @pe_id, result)
         end
+
+        # TODO
+        def rediscover(host_id=-1, ds_id=-1, deploy_id="")
+            host_id   ||= -1
+            ds_id     ||= -1
+            deploy_id ||= ""
+
+            return call(VM_METHODS[:rediscover], @pe_id, host_id, ds_id, deploy_id)
+        end
+
 
         ########################################################################
         # Helpers to get VirtualMachine information

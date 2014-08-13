@@ -360,6 +360,26 @@ public:
             RequestAttributes& att);
 };
 
+/* ------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
+
+class VirtualMachineRediscover: public RequestManagerVirtualMachine
+{
+public:
+    VirtualMachineRediscover():
+        RequestManagerVirtualMachine("VirtualMachineRediscover",
+                                     "Rediscovers a virtual machine",
+                                     "A:siii")
+    {
+         auth_op = AuthRequest::ADMIN;
+    };
+
+    ~VirtualMachineRediscover(){};
+
+    void request_execute(xmlrpc_c::paramList const& _paramList,
+            RequestAttributes& att);
+};
+
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 

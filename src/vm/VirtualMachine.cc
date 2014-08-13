@@ -58,6 +58,7 @@ VirtualMachine::VirtualMachine(int           id,
         cpu(0),
         net_tx(0),
         net_rx(0),
+        rediscover(0),
         history(0),
         previous_history(0),
         _log(0)
@@ -3424,6 +3425,7 @@ string& VirtualMachine::to_xml_extended(string& xml, int n_history) const
         << "<STATE>"     << state     << "</STATE>"
         << "<LCM_STATE>" << lcm_state << "</LCM_STATE>"
         << "<RESCHED>"   << resched   << "</RESCHED>"
+        << "<REDISCOVER>"<< rediscover<< "</REDISCOVER>"
         << "<STIME>"     << stime     << "</STIME>"
         << "<ETIME>"     << etime     << "</ETIME>"
         << "<DEPLOY_ID>" << deploy_id << "</DEPLOY_ID>"
@@ -3492,6 +3494,7 @@ int VirtualMachine::from_xml(const string &xml_str)
     rc += xpath(istate,    "/VM/STATE",     0);
     rc += xpath(ilcmstate, "/VM/LCM_STATE", 0);
     rc += xpath(resched,   "/VM/RESCHED",   0);
+    rc += xpath(rediscover,"/VM/REDISCOVER",   0);
 
     rc += xpath(stime,     "/VM/STIME",    0);
     rc += xpath(etime,     "/VM/ETIME",    0);

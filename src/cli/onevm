@@ -559,6 +559,18 @@ cmd=CommandParser::CmdParser.new(ARGV) do
         end
     end
 
+    rediscover_desc = <<-EOT.unindent
+        TODO
+    EOT
+
+    command :rediscover, rediscover_desc, [:range,:vmid_list],
+        [:hostid,nil], [:datastoreid,nil], [:deploy_id,nil] do
+
+        helper.perform_actions(args[0], options, "recovering") do |vm|
+            vm.rediscover(args[1], args[2], args[3])
+        end
+    end
+
     disk_attach_desc = <<-EOT.unindent
         Attaches a disk to a running VM. When using --file add only one
         DISK instance.

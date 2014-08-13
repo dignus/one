@@ -57,8 +57,6 @@ int DispatchManager::deploy (
         goto error;
     }
 
-    vm->unlock();
-
     return 0;
 
 error:
@@ -67,7 +65,6 @@ error:
     oss << "Could not deploy VM " << vid << ", wrong state.";
     NebulaLog::log("DiM",Log::ERROR,oss);
 
-    vm->unlock();
     return -1;
 }
 
