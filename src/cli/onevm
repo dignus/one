@@ -560,7 +560,15 @@ cmd=CommandParser::CmdParser.new(ARGV) do
     end
 
     rediscover_desc = <<-EOT.unindent
-        TODO
+        Rediscovers a VM.
+        This action is intended for a VM that has been manually started in the
+        hypervisor by the admin. OpenNebula will try to monitor it, but none
+        of the Transfer or VM drivers will be executed.
+
+        Example: A VM deployment fails because the libvirt daemon crashed. The
+        files were copied to the host, and the admin can create the VM using
+        virsh. The rediscover command moves the VM to UNKNOWN, and if it is
+        correctly monitored, the state will change to RUNNING.
     EOT
 
     command :rediscover, rediscover_desc, [:range,:vmid_list],

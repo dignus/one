@@ -547,7 +547,10 @@ module OpenNebula
             return call(VM_METHODS[:recover], @pe_id, result)
         end
 
-        # TODO
+        # Rediscovers a VM.
+        # This action is intended for a VM that has been manually started in the
+        # hypervisor by the admin. OpenNebula will try to monitor it, but none
+        # of the Transfer or VM drivers will be executed.
         def rediscover(host_id=-1, ds_id=-1, deploy_id="")
             host_id   ||= -1
             ds_id     ||= -1
