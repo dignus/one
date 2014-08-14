@@ -569,6 +569,8 @@ cmd=CommandParser::CmdParser.new(ARGV) do
         files were copied to the host, and the admin can create the VM using
         virsh. The rediscover command moves the VM to UNKNOWN, and if it is
         correctly monitored, the state will change to RUNNING.
+
+        States: SUSPENDED, POWEROFF, FAILED, PENDING, HOLD, UNDEPLOYED, STOPPED
     EOT
 
     command :rediscover, rediscover_desc, [:range,:vmid_list],
